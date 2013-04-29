@@ -80,6 +80,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Computer.txt" />
+    <Content Include="stopword.txt" />
+    <Content Include="test.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Desktop\StemmersNet\StemmersNet\StemmersNet\StemmersNet.csproj">

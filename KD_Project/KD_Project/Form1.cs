@@ -33,18 +33,40 @@ namespace KD_Project
         {
             char[] stripChars = { ';', ',','.', '-', '_', '^', '(', ')', '[', ']', '\n', '\t', '\r','"'};
            
-            string text = System.IO.File.ReadAllText("Computer.txt");
-            string text1 = System.IO.File.ReadAllText("stopword.txt");
-            text=text.ToLower();
+            string text = System.IO.File.ReadAllText("test.txt");
+            //string result = Regex.Replace(text,@"\n", " ");
+            string text1 = System.IO.File.ReadAllText("test-stop.txt");
+
+            text.ToLower();
+            text1.ToLower();
+            List<string> wordlist = text.Split(stripChars).ToList();
+            List<string> stopwordlist = text1.Split(stripChars).ToList();
+            /*
+            foreach(string word in stopwordlist)
+                wordlist.RemoveAll(word);
+             */
+            var result = wordlist.Except(stopwordlist);
+            IEnumerable<string> differenceQuery =
+          wordlist.Except(stopwordlist);
+            wordlist.RemoveAll(Item => stopwordlist.Contains(Item));
+
+            foreach (string a in result)
+                textBox1.AppendText(a);
+            
+                /*
+                
 
             List<string> wordlist = text.Split(stripChars).ToList();
             List<string> stopwordlist = text1.Split(' ').ToList();
-            
+
+
+            //wordlist = Regex.Replace(wordlist," ","\n");
+  
          
            IEnumerable<string> differenceQuery =  wordlist.Except(stopwordlist);
-            foreach (string df in differenceQuery)
-                textBox1.AppendText(df);
-            
+           foreach (string s in differenceQuery)
+               textBox1.AppendText(s);
+            */
             /*
                   //wordList= wordList.Except(stopwordlist);
             string stopwordlist1 = string.Format(@"\s?\b(?:{0})\b\s?", stopwordlist);
