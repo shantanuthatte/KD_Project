@@ -13,7 +13,7 @@ using System.Windows.Forms;
 using HtmlAgilityPack;
 using Iveonik.Stemmers;
 using LemmaSharp;
-
+using System.Data.SqlClient;
 
 namespace KD_Project
 {
@@ -27,8 +27,27 @@ namespace KD_Project
         }
 
         private void Form1_Load(object sender, EventArgs e)
-        {
-
+        {/*
+            string strCon = @"Data Source=.\SQLEXPRESS;AttachDbFilename='C:\Users\GV\Documents\GitHub\KD_Project\KD_Project\KD_Project\SemanticDB.sdf';Integrated Security=True;User Instance=True";
+            string strSQL = "select * from word";
+            SqlConnection connection = new SqlConnection(strCon);
+          try {
+               connection.Open();
+             Console.WriteLine("Connection is Open ! ");
+               SqlDataAdapter adapter = new SqlDataAdapter();
+               SqlCommand command = new SqlCommand(strSQL, connection);
+               SqlDataReader myReader = command.ExecuteReader(CommandBehavior.CloseConnection);
+               while (myReader.Read())
+               {
+                   Console.WriteLine(myReader.GetString(0));
+               }
+               myReader.Close();
+               
+               connection.Close();
+          }
+            catch(Exception e1){Console.WriteLine(e1);
+            }
+   */
             
         }
 
@@ -48,23 +67,117 @@ namespace KD_Project
             HashSet<string> hash = new HashSet<string>(common.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries));
             return(hash.Contains(s));
         }
+        /*
+        public static string GetStrBetweenTags(this string value,string startTag,string endTag)
+        {
+            if (value.Contains(startTag) && value.Contains(endTag))
+            {
+                int index = value.IndexOf(startTag) + startTag.Length;
+                return value.Substring(index, value.IndexOf(endTag) - index);
+            }
+            else
+                return null;
+        }
+        */
 
+        public string GetStrBetweenTags(string value,string startTag,string endTag)
+        {
+            if (value.Contains(startTag) && value.Contains(endTag))
+            {
+                int index = value.IndexOf(startTag) + startTag.Length;
+                return value.Substring(index, value.IndexOf(endTag) - index);
+            }
+            else
+                return null;
+        }
         private void DownloadComplete(Object sender, DownloadStringCompletedEventArgs e)
         {
             //Console.WriteLine(e.Result);
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(e.Result);
 
-            var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
+            //Rekha
+            //var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
+            var nodes = doc.DocumentNode.SelectNodes("//h1|//h2|//h3|//h4|//h5|//h6|//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
 
             foreach (var node in nodes)
                 node.ParentNode.RemoveChild(node);
 
             string htmlOutput = doc.DocumentNode.OuterHtml;
+            //Modified by Rekha
+            //string teOutput = doc.DocumentNode.SelectNodes("");
+           // string res = GetStrBetweenTags(htmlOutput, "</h", "<h");
+           var s = doc.DocumentNode.SelectSingleNode("//div[@id='mw-content-text']");
+            //var s = doc.DocumentNode.SelectSingleNode("//h[1-9]");
 
-            string paragraph = "Simple computers are small enough to fit into mobile devices, and mobile computers can be powered by small batteries. Personal computers in their various forms are icons of the Information Age and are what most people think of as “computers.” However, the embedded computers found in many devices from MP3 players to fighter aircraft and from toys to industrial robots are the most numerous.";
+
+            string selText = s.InnerText;
+            /*
+            HtmlNode someNode = doc.GetElementbyId("mw-content-text");
+
+            // If there is no node with that Id, someNode will be null
+            if (someNode != null)
+            {
+                // Extracts all links within that node
+                IEnumerable<HtmlNode> allLinks = someNode.Descendants("a");
+
+                // Outputs the href for external links
+                foreach (HtmlNode link in allLinks)
+                {
+                    // Checks whether the link contains an HREF attribute
+                    if (link.Attributes.Contains("href"))
+                    {
+                        // Simple check: if the href begins with "http://", prints it out
+                        if (link.Attributes["href"].Value.StartsWith("http://"))
+                            Console.WriteLine(link.Attributes["href"].Value);
+                    }
+                }
+            }
+            */
+            List<string> hrefTags = new List<string>();
+            List<string> finalhrefTags = new List<string>();
+            int countLinks = 0;
+            var baseUrl = new Uri("http://en.wikipedia.org/w/index.php?title="+textBox1.Text+"&printable=yes");
+            foreach (HtmlNode link in doc.DocumentNode.SelectNodes("//a[@href]"))
+            {
+                HtmlAttribute att = link.Attributes["href"];
+                hrefTags.Add(att.Value);
+                if (att.Value.StartsWith("#"))
+                    continue;
+                var url = new Uri(baseUrl, att.Value);
+                finalhrefTags.Add(url.AbsoluteUri);
+                
+
+            }
+
+
+            Dictionary<string, int> weights = new Dictionary<string, int>();
+
+         
+                var taglist = finalhrefTags.GroupBy(i => i);
+                countLinks = finalhrefTags.Count;
+         /*       foreach (var str in taglist)
+                {
+                    Console.WriteLine("{0} {1}", str.Key, countLinks);
+                    countLinks--;
+                }
+            */
+            
+                foreach (var str in taglist) {
+                    if (countLinks != -1)
+                    {
+                        textBox3.AppendText(str.Key+ " : " + countLinks +"\n");
+                        weights.Add(str.Key, countLinks);
+                        countLinks--;
+                    }
+                }
+          
+            //End
+
+            string paragraph = selText;// "Simple computers are small enough to fit into mobile devices, and mobile computers can be powered by small batteries. Personal computers in their various forms are icons of the Information Age and are what most people think of as “computers.” However, the embedded computers found in many devices from MP3 players to fighter aircraft and from toys to industrial robots are the most numerous.";
             //string stopword = "the a";
-            string[] words = paragraph.Split(new char[] { ' ', ',', '.', '(', ')', '[', ']', '“', '”', '"' }, StringSplitOptions.RemoveEmptyEntries);
+            paragraph=paragraph.ToLower();
+            string[] words = paragraph.Split(new char[] { ' ', ',', '.', '(', ')', '[', ']', '“', '”', '"' ,'\n','!'}, StringSplitOptions.RemoveEmptyEntries);
 
             string[] swords = words.Where(x => !stopWordTest(x)).ToArray();
             List<string> lwords = new List<string>();
@@ -75,10 +188,31 @@ namespace KD_Project
             }
             List<string> fwords = new List<string>();
             fwords = lwords.Where(x => !commonWordTest(x)).ToList();
-            var cwords = lwords.GroupBy(i => i);
+            //remove keyword
+            //
+            string sptr = textBox1.Text;
+            sptr=sptr.ToLower();
+           // foreach (string sp in fwords)
+             //   if (sp==sptr) fwords.Remove(sp);
+            //
+            for (int i = 0; i < fwords.Count; i++)
+            {
+                if (fwords[i].Equals(sptr))
+                    fwords.Remove(fwords[i]);
+            }
+            
+            Dictionary<string, int> finallist = new Dictionary<string, int>();
+            var cwords = fwords.GroupBy(i => i);
             foreach (var w in cwords)
             {
-                Console.WriteLine("{0} {1}", w.Key, w.Count());
+                if (w.Count() > 3)
+                {
+                    
+                        finallist.Add(w.Key, w.Count());
+                        textBox2.AppendText(w.Key + ":  " + w.Count() + "\n");
+                        Console.WriteLine("{0} {1}", w.Key, w.Count());
+                    
+                }
             }
 
             Keywords keys = new Keywords();
@@ -86,27 +220,30 @@ namespace KD_Project
             {
                 keys.addOcc(fwords[i], i);
             }
-            /*List<string> wlist = new List<string>(words);
-            List<string> clist = new List<string>();
-            //List<string> swords = new List<string>(stopword.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries));
-            wlist.RemoveAll(stopWordTest);
-            ILemmatizer lemm = new LemmatizerPrebuiltCompact(LemmaSharp.LanguagePrebuilt.English);
-            foreach (string word in wlist)
-            {
-                //Console.WriteLine();
-                clist.Add(lemm.Lemmatize(word.ToLower()));
-            }
-            clist = new List<string>(clist.Except<string>(getCommonHash()));*/
-
+           
+           
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             WebClient wc = new WebClient();
+            string key=textBox1.Text;
             wc.BaseAddress = BaseAddr;
             wc.DownloadStringCompleted += new DownloadStringCompletedEventHandler(DownloadComplete);
-            wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title=Computer&printable=yes");
+            wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title="+key+"&printable=yes");
             
         }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void textBox2_TextChanged_1(object sender, EventArgs e)
+        {
+           
+        }
+
+        
     }
 }
