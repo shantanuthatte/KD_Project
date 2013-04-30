@@ -42,11 +42,11 @@ namespace KD_Project
                 return false;
         }
 
-        private static List<string> getCommonHash()
+        private static bool commonWordTest(string s)
         {
             string common = "the be and of a in to have to it I that for you he with on do say this they at but we his from that not n't n't by she or as what go their can who get if would her all my make about know will as up one time there year so think when which them some me people take out into just see him your come could now than like other how then its our two more these want way look first also new because day more use no man find here thing give many well only those tell one very her even back any good woman through us life child there work down may after should call world over school still try in as last ask need too feel three when state never become between high really something most another much family own out leave put old while mean on keep student why let great same big group begin seem country help talk where turn problem every start hand might American show part about against place over such again few case most week company where system each right program hear so question during work play government run small number off always move like night live Mr point believe hold today bring happen next without before large all million must home under water room write mother area national money story young fact month different lot right study book eye job word though business issue side kind four head far black long both little house yes after since long provide service around friend important father sit away until power hour game often yet line political end among ever stand bad lose however member pay law meet car city almost include continue set later community much name five once white least president learn real change team minute best several idea kid body information nothing ago right lead social understand whether back watch together follow around parent only stop face anything create public already speak others read level allow add office spend door health person art sure such war history party within grow result open change morning walk reason low win research girl guy early food before moment himself air teacher force offer enough both education across although remember foot second boy maybe toward able age off policy everything love process music including consider appear actually buy probably human wait serve market die send expect home sense build stay fall oh nation plan cut college interest death course someone experience behind reach local kill six remain effect use yeah suggest class control raise care perhaps little late hard field else pass former sell major sometimes require along development themselves report role better economic effort up decide rate strong possible heart drug show leader light voice wife whole police mind finally pull return free military price report less according decision explain son hope even develop view relationship carry town road drive arm true federal break better difference thank receive";
             HashSet<string> hash = new HashSet<string>(common.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries));
-            return (new List<string>(common.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries)));
+            return(hash.Contains(s));
         }
 
         private void DownloadComplete(Object sender, DownloadStringCompletedEventArgs e)
@@ -54,18 +54,39 @@ namespace KD_Project
             //Console.WriteLine(e.Result);
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(e.Result);
-            
-            var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre");
+
+            var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
 
             foreach (var node in nodes)
                 node.ParentNode.RemoveChild(node);
 
             string htmlOutput = doc.DocumentNode.OuterHtml;
 
-            string paragraph = "A computer is a general purpose device that can be programmed to carry out a finite set of arithmetic or logical operations. Since a sequence of operations can be readily changed, the computer can solve more than one kind of problem. Conventionally, a computer consists of at least one processing element, typically a central processing unit (CPU) and some form of memory. The processing element carries out arithmetic and logic operations, and a sequencing and control unit that can change the order of operations based on stored information. Peripheral devices allow information to be retrieved from an external source, and the result of operations saved and retrieved. The first electronic digital computers were developed between 1940 and 1945 in the United Kingdom and United States. Originally they were the size of a large room, consuming as much power as several hundred modern personal computers (PCs).[1] In this era mechanical analog computers were used for military applications.";
+            string paragraph = "Simple computers are small enough to fit into mobile devices, and mobile computers can be powered by small batteries. Personal computers in their various forms are icons of the Information Age and are what most people think of as “computers.” However, the embedded computers found in many devices from MP3 players to fighter aircraft and from toys to industrial robots are the most numerous.";
             //string stopword = "the a";
             string[] words = paragraph.Split(new char[] { ' ', ',', '.', '(', ')', '[', ']', '“', '”', '"' }, StringSplitOptions.RemoveEmptyEntries);
-            List<string> wlist = new List<string>(words);
+
+            string[] swords = words.Where(x => !stopWordTest(x)).ToArray();
+            List<string> lwords = new List<string>();
+            ILemmatizer lemm = new LemmatizerPrebuiltCompact(LanguagePrebuilt.English);
+            foreach (string word in swords)
+            {
+                lwords.Add(lemm.Lemmatize(word.ToLower()));
+            }
+            List<string> fwords = new List<string>();
+            fwords = lwords.Where(x => !commonWordTest(x)).ToList();
+            var cwords = lwords.GroupBy(i => i);
+            foreach (var w in cwords)
+            {
+                Console.WriteLine("{0} {1}", w.Key, w.Count());
+            }
+
+            Keywords keys = new Keywords();
+            for (int i = 0; i < fwords.Count; i++)
+            {
+                keys.addOcc(fwords[i], i);
+            }
+            /*List<string> wlist = new List<string>(words);
             List<string> clist = new List<string>();
             //List<string> swords = new List<string>(stopword.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries));
             wlist.RemoveAll(stopWordTest);
@@ -75,7 +96,7 @@ namespace KD_Project
                 //Console.WriteLine();
                 clist.Add(lemm.Lemmatize(word.ToLower()));
             }
-            clist = new List<string>(clist.Except<string>(getCommonHash()));
+            clist = new List<string>(clist.Except<string>(getCommonHash()));*/
 
         }
 
