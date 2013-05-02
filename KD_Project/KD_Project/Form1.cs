@@ -195,11 +195,14 @@ namespace KD_Project
            // foreach (string sp in fwords)
              //   if (sp==sptr) fwords.Remove(sp);
             //
+            /*
             for (int i = 0; i < fwords.Count; i++)
             {
                 if (fwords[i].Equals(sptr))
                     fwords.Remove(fwords[i]);
             }
+             */
+            fwords.RemoveAll(x => x == sptr);
             
             Dictionary<string, int> finallist = new Dictionary<string, int>();
             var cwords = fwords.GroupBy(i => i);
