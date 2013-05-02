@@ -244,7 +244,7 @@ namespace KD_Project
             string key=textBox1.Text;
             wc.BaseAddress = BaseAddr;
             wc.DownloadStringCompleted += new DownloadStringCompletedEventHandler(DownloadComplete);
-            wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title="+key+"&printable=yes");
+            wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title="+ HttpUtility.UrlEncode(key) +"&printable=yes");
             
         }
 
