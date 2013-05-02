@@ -6,6 +6,32 @@ using System.Threading.Tasks;
 
 namespace KD_Project
 {
+    
+    class Section
+    {
+        public int section = 0;
+        public Keywords words = new Keywords();
+        Dictionary<Link, int> links = new Dictionary<Link, int>();
+
+        public Section(Keywords w, int s, Dictionary<Link, int> dic)
+        {
+            words = w;
+            section = s;
+            links = dic;
+        }
+    }
+
+    class Link
+    {
+        public string url = "";
+        public string text = "";
+
+        public Link(string u, string t)
+        {
+            url = u;
+            text = t;
+        }
+    }
     class Word
     {
         public string word = "";
@@ -24,8 +50,7 @@ namespace KD_Project
     class Keywords
     {
         public List<Word> words = new List<Word>();
-        public List<string> wlist = new List<string>();
-
+        
         public bool addOcc(string word, int index)
         {
             /*if (wlist.Contains(word))

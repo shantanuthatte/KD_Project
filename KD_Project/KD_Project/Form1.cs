@@ -22,6 +22,11 @@ namespace KD_Project
     public partial class Form1 : Form
     {
         public string BaseAddr = "http://en.wikipedia.org/w/index.php?";
+        public const float PS = 0.38f;
+        public const float PFS = 0.28f;
+        public const float PF = 0.2f;
+        public const float PPS = 0.14f;
+
         public Form1()
         {
             InitializeComponent();
@@ -91,6 +96,79 @@ namespace KD_Project
             else
                 return null;
         }
+
+        private Keywords getKeywords(string data, int count)
+        {
+            string paragraph = data;// "Simple computers are small enough to fit into mobile devices, and mobile computers can be powered by small batteries. Personal computers in their various forms are icons of the Information Age and are what most people think of as “computers.” However, the embedded computers found in many devices from MP3 players to fighter aircraft and from toys to industrial robots are the most numerous.";
+            
+            paragraph = paragraph.ToLower();
+            string[] words = paragraph.Split(new char[] { ' ', ',', '.', '(', ')', '[', ']', '“', '”', '"', '\n', '!' }, StringSplitOptions.RemoveEmptyEntries);
+
+            string[] swords = words.Where(x => !stopWordTest(x)).ToArray();
+            List<string> lwords = new List<string>();
+            ILemmatizer lemm = new LemmatizerPrebuiltCompact(LanguagePrebuilt.English);
+            foreach (string word in swords)
+            {
+                if (word.Length == 1)
+                    continue;
+                if (word.Length <= 3)
+                {
+                    //Console.WriteLine(word);
+                    lwords.Add(word.ToLower());
+                }
+                else
+                    lwords.Add(lemm.Lemmatize(word));
+
+            }
+            List<string> fwords = new List<string>();
+            fwords = lwords.Where(x => !commonWordTest(x)).ToList();
+            //remove keyword
+            //
+            string sptr = textBox1.Text;
+            sptr = sptr.ToLower();
+            // foreach (string sp in fwords)
+            //   if (sp==sptr) fwords.Remove(sp);
+            //
+            for (int i = 0; i < fwords.Count; i++)
+            {
+                if (fwords[i].Equals(sptr))
+                    fwords.Remove(fwords[i]);
+            }
+
+            Dictionary<string, int> finallist = new Dictionary<string, int>();
+            var cwords = fwords.GroupBy(i => i);
+            foreach (var w in cwords)
+            {
+                if (w.Count() > count)
+                {
+
+                    finallist.Add(w.Key, w.Count());
+                    textBox2.AppendText(w.Key + ":  " + w.Count() + "\n");
+                    Console.WriteLine("{0} {1}", w.Key, w.Count());
+
+                }
+            }
+
+            Keywords keys = new Keywords();
+            for (int i = 0; i < fwords.Count; i++)
+            {
+                if(finallist.ContainsKey(fwords[i]))
+                    keys.addOcc(fwords[i], i);
+            }
+            keys.words.Sort(sortWordsCount);
+            return keys;
+        }
+
+        private static int sortWordsCount(Word x, Word y)
+        {
+            if (x.count > y.count)
+                return -1;
+            else if (x.count < y.count)
+                return 1;
+            else
+                return 0;
+        }
+
         private void DownloadComplete(Object sender, DownloadStringCompletedEventArgs e)
         {
             //Console.WriteLine(e.Result);
@@ -100,7 +178,7 @@ namespace KD_Project
             //Rekha
             //var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
 
-            var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
+            var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//span[@id='coordinates']|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
 
 
             foreach (var node in nodes)
@@ -114,8 +192,46 @@ namespace KD_Project
             //var s = doc.DocumentNode.SelectSingleNode("//h[1-9]");
 
             var ns = s.SelectNodes("h1|h2|h3|h4|h5|h6|p");
+
+            int section = 1;
+            List<Section> sections = new List<Section>();
+
+            var pKeys = getKeywords(s.InnerText, 3);
+            var pLinks = getLinkDict(s);
             foreach (HtmlNode n in ns){
-                Console.WriteLine(n.Name);
+                switch (n.Name)
+                {
+                    case "h1":
+                        Console.WriteLine("H1");
+                        section = 1;
+
+                        break;
+                    case "h2":
+                        section = 2;
+                        Console.WriteLine("H2");
+                        break;
+                    case "h3":
+                        section = 3;
+                        Console.WriteLine("H3");
+                        break;
+                    case "h4":
+                        section = 4;
+                        Console.WriteLine("H4");
+                        break;
+                    case "h5":
+                        section = 5;
+                        Console.WriteLine("H5");
+                        break;
+                    case "h6":
+                        section = 6;
+                        Console.WriteLine("H6");
+                        break;
+                    case "p":
+                        Console.WriteLine("P");
+                        sections.Add(new Section(getKeywords(n.InnerText, 1), section, getLinkDict(n)));
+                        break;
+                }
+                //Console.WriteLine(n.Name);
             }
             string selText = s.InnerText;
             /*
@@ -140,6 +256,8 @@ namespace KD_Project
                 }
             }
             */
+
+            /************* HyperLink ************
             List<string> hrefTags = new List<string>();
             List<string> finalhrefTags = new List<string>();
             int countLinks = 0;
@@ -167,7 +285,7 @@ namespace KD_Project
                     Console.WriteLine("{0} {1}", str.Key, countLinks);
                     countLinks--;
                 }
-            */
+            
             
                 foreach (var str in taglist) {
                     if (countLinks != -1)
@@ -177,9 +295,11 @@ namespace KD_Project
                         countLinks--;
                     }
                 }
+             * *****/
           
             //End
 
+            /*************** Keyword code *********
             string paragraph = selText;// "Simple computers are small enough to fit into mobile devices, and mobile computers can be powered by small batteries. Personal computers in their various forms are icons of the Information Age and are what most people think of as “computers.” However, the embedded computers found in many devices from MP3 players to fighter aircraft and from toys to industrial robots are the most numerous.";
             //string stopword = "the a";
             paragraph=paragraph.ToLower();
@@ -235,8 +355,115 @@ namespace KD_Project
             {
                 keys.addOcc(fwords[i], i);
             }
+            
+            */
+
+            /* ********* Calculating weight of keywords in section **********
+             * s*p(s)+fs*p(fs)+f*p(f)+(sum(ps*p(ps)))
+             * s = section,
+             * fs = freq in section
+             * f = overall freq
+             * ps = position in section
+             * **************************************************************/
+            Dictionary<string, float> keywordsWeight = new Dictionary<string, float>();
+            foreach (var sec in sections)
+            {
+                
+                foreach (var w in sec.words.words)
+                {
+                    float weight = 0.0f;
+                    if (keywordsWeight.ContainsKey(w.word))
+                    {
+                        //Word is already there so add section vars to it
+                        float posFactor = 0.0f;
+                        posFactor = calcPositionFactor(w);
+                        weight = (sec.section*PS)+(w.count*PFS)+(posFactor);
+                        keywordsWeight[w.word] += weight;
+                    }
+                    else
+                    {
+                        //Add word to dict
+                        float posFactor = 0.0f;
+                        posFactor = calcPositionFactor(w);
+                        //Get freq in over all page
+                        Word wordInPage = pKeys.words.FindLast(x => x.word == w.word);
+                        if (wordInPage == null)
+                            continue;
+                        int occurances = wordInPage.count;
+                        weight = (sec.section * PS) + (w.count * PFS) + (occurances*PF) + (posFactor);
+                        //keywordsWeight[w.word] += weight;
+                        keywordsWeight.Add(w.word, weight);
+                    }
+                }
+                
+            }
+            keywordsWeight = keywordsWeight.OrderByDescending(key => key.Value).ToDictionary(d => d.Key, d => d.Value);
+            Console.WriteLine("");
            
-           
+        }
+
+        private float calcPositionFactor(Word w)
+        {
+            float factor = 0.0f;
+            foreach (var oc in w.occurances)
+            {
+                factor += oc * PPS;
+            }
+            return factor;
+        }
+
+        private Dictionary<Link, int> getLinkDict(HtmlNode s)
+        {
+            List<Link> hrefTags = new List<Link>();
+            List<Link> finalhrefTags = new List<Link>();
+            int countLinks = 0;
+            var baseUrl = new Uri("http://en.wikipedia.org/w/index.php?title=" + HttpUtility.UrlEncode(textBox1.Text) + "&printable=yes");
+            var nodes = s.SelectNodes(".//a");
+            if(nodes != null)
+                foreach (HtmlNode link in nodes)
+                {
+                    HtmlAttribute att = link.Attributes["href"];
+                    hrefTags.Add(new Link(att.Value, link.InnerText));
+                    if (att.Value.StartsWith("#"))
+                        continue;
+                    var url = new Uri(baseUrl, att.Value);
+                    finalhrefTags.Add(new Link(url.AbsoluteUri, link.InnerText));
+
+                }
+            
+            Dictionary<Link, int> weights = new Dictionary<Link, int>();
+
+            var taglist = finalhrefTags.GroupBy(i => i.url);
+            countLinks = finalhrefTags.Count;
+
+            
+            foreach (var link in taglist)
+            {
+                var lnk = link.ToList();
+                countLinks -= lnk.Count;
+                weights.Add(lnk[0], countLinks);
+                Console.WriteLine("");
+
+            }
+
+            /*       foreach (var str in taglist)
+                   {
+                       Console.WriteLine("{0} {1}", str.Key, countLinks);
+                       countLinks--;
+                   }
+               
+
+            foreach (var str in taglist)
+            {
+                if (countLinks != -1)
+                {
+                    textBox3.AppendText(str.Key + " : " + countLinks + "\n");
+                    weights.Add(str.Key, countLinks);
+                    countLinks--;
+                }
+            } */
+
+            return weights;
         }
 
         private void button1_Click(object sender, EventArgs e)
