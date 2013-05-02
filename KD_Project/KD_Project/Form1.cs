@@ -99,11 +99,9 @@ namespace KD_Project
 
             //Rekha
             //var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
-<<<<<<< HEAD
-            var nodes = doc.DocumentNode.SelectNodes("//h1|//h2|//h3|//h4|//h5|//h6|//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
-=======
+
             var nodes = doc.DocumentNode.SelectNodes("//script|//style|//img|//table|//dl|//sup|//pre|//div[contains(concat(' ',@class,' '),' thumb ')]|//div[@class='dablink']|//div[@id='siteSub']|//div[@id='jump-to-nav']|//div[contains(concat(' ',@class,' '),' metadata ')]|//div[contains(concat(' ',@class,' '),' rellink ')]|//ol[@class='references']|//div[contains(concat(' ',@class,' '),' refbegin ')]|//div[@class='printfooter']|//div[@id='catlinks']|//div[@id='mw-navigation']|//div[@id='footer']");
->>>>>>> origin/shantanu
+
 
             foreach (var node in nodes)
                 node.ParentNode.RemoveChild(node);
@@ -114,47 +112,6 @@ namespace KD_Project
            // string res = GetStrBetweenTags(htmlOutput, "</h", "<h");
            var s = doc.DocumentNode.SelectSingleNode("//div[@id='mw-content-text']");
             //var s = doc.DocumentNode.SelectSingleNode("//h[1-9]");
-<<<<<<< HEAD
-
-
-            string selText = s.InnerText;
-            /*
-            HtmlNode someNode = doc.GetElementbyId("mw-content-text");
-
-            // If there is no node with that Id, someNode will be null
-            if (someNode != null)
-            {
-                // Extracts all links within that node
-                IEnumerable<HtmlNode> allLinks = someNode.Descendants("a");
-
-                // Outputs the href for external links
-                foreach (HtmlNode link in allLinks)
-                {
-                    // Checks whether the link contains an HREF attribute
-                    if (link.Attributes.Contains("href"))
-                    {
-                        // Simple check: if the href begins with "http://", prints it out
-                        if (link.Attributes["href"].Value.StartsWith("http://"))
-                            Console.WriteLine(link.Attributes["href"].Value);
-                    }
-                }
-            }
-            */
-            List<string> hrefTags = new List<string>();
-            List<string> finalhrefTags = new List<string>();
-            int countLinks = 0;
-            var baseUrl = new Uri("http://en.wikipedia.org/w/index.php?title="+textBox1.Text+"&printable=yes");
-            foreach (HtmlNode link in doc.DocumentNode.SelectNodes("//a[@href]"))
-            {
-                HtmlAttribute att = link.Attributes["href"];
-                hrefTags.Add(att.Value);
-                if (att.Value.StartsWith("#"))
-                    continue;
-                var url = new Uri(baseUrl, att.Value);
-                finalhrefTags.Add(url.AbsoluteUri);
-                
-
-=======
 
             var ns = s.SelectNodes("h1|h2|h3|h4|h5|h6|p");
             foreach (HtmlNode n in ns){
@@ -196,9 +153,7 @@ namespace KD_Project
                     continue;
                 var url = new Uri(baseUrl, att.Value);
                 finalhrefTags.Add(url.AbsoluteUri);
-                
 
->>>>>>> origin/shantanu
             }
 
 
@@ -290,11 +245,9 @@ namespace KD_Project
             string key=textBox1.Text;
             wc.BaseAddress = BaseAddr;
             wc.DownloadStringCompleted += new DownloadStringCompletedEventHandler(DownloadComplete);
-<<<<<<< HEAD
-            wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title="+key+"&printable=yes");
-=======
+
             wc.DownloadStringTaskAsync("http://en.wikipedia.org/w/index.php?title="+ HttpUtility.UrlEncode(key) +"&printable=yes");
->>>>>>> origin/shantanu
+
             
         }
 
